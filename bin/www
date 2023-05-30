@@ -1,0 +1,132 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+require("dotenv").config({ path: `.env.${process.env.NODE_ENV}` });
+var app = require("../src/app");
+var debug = require("debug")("nodejs-boilerplate:server");
+var http = require("http");
+const colors = require("colors/safe");
+const figures = require("figures");
+const db = require("../src/db");
+const logger = require("../src/lib/common/logger")("entry-point");
+const tlsVerifyOff = process.env.TLS_VERIFY === "0" ? true : false;
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+(async () => {
+  logger.info("Starting at main");
+  console.info(colors.bgYellow(colors.black("Performing checks...")));
+
+  if (tlsVerifyOff) {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+    console.log(`${colors.red(figures.cross)} TLS verification disabled`);
+  }
+
+  await db.ping();
+  http.createServer(app).listen(process.env.APP_PORT, function () {
+    const url = `http://localhost:${process.env.APP_PORT}`;
+    console.log(`${process.env.APP_NAME} listening on ${url}`);
+    console.log(`Test the ping call with following command`);
+    // console.debug(`${colors.yellow('curl ' + url + '/api/ping')}`);
+  });
+})();
+
+process.on("uncaughtException", function () {
+  console.log(arguments, "ERROR-STACK");
+});
+
+// process.on('unhandledRejection', function () {
+//     arguments.then((res)=>{
+//         console.log(res,"ERROR-STACK");
+
+//     })
+// });
+process.on("unhandledRejection", function handleWarning(reason, promise) {
+  console.log("[PROCESS] Unhandled Promise Rejection");
+  console.log("- - - - - - - Reason- - - - - - - - - - - -");
+  console.log(reason);
+  console.log("----------------------------------------");
+  if (reason) {
+    if (reason.name === "SequelizeConnectionAcquireTimeoutError") {
+      process.exit(0);
+    }
+  }
+});
+
+// var port = normalizePort(process.env.PORT || "3000");
+// app.set("port", port);
+// // await db.ping();
+
+// /**
+//  * Create HTTP server.
+//  */
+
+// var server = http.createServer(app);
+
+// /**
+//  * Listen on provided port, on all network interfaces.
+//  */
+
+// server.listen(port);
+// server.on("error", onError);
+// server.on("listening", onListening);
+
+// /**
+//  * Normalize a port into a number, string, or false.
+//  */
+
+// function normalizePort(val) {
+//   var port = parseInt(val, 10);
+
+//   if (isNaN(port)) {
+//     // named pipe
+//     return val;
+//   }
+
+//   if (port >= 0) {
+//     // port number
+//     return port;
+//   }
+
+//   return false;
+// }
+
+// /**
+//  * Event listener for HTTP server "error" event.
+//  */
+
+// function onError(error) {
+//   if (error.syscall !== "listen") {
+//     throw error;
+//   }
+
+//   var bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
+
+//   // handle specific listen errors with friendly messages
+//   switch (error.code) {
+//     case "EACCES":
+//       console.error(bind + " requires elevated privileges");
+//       process.exit(1);
+//       break;
+//     case "EADDRINUSE":
+//       console.error(bind + " is already in use");
+//       process.exit(1);
+//       break;
+//     default:
+//       throw error;
+//   }
+// }
+
+// /**
+//  * Event listener for HTTP server "listening" event.
+//  */
+
+// function onListening() {
+//   var addr = server.address();
+//   var bind = typeof addr === "string" ? "pipe " + addr : "port " + addr.port;
+//   debug("Listening on " + bind);
+// }

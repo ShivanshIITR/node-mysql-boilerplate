@@ -1,0 +1,4 @@
+###
+# Get api to fetch all the users.
+GET http://localhost:3001/api/users
+Content-Type: application/json
